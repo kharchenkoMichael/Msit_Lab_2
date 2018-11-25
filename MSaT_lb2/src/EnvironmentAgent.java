@@ -24,8 +24,8 @@ public class EnvironmentAgent extends Agent {
         DFAgentDescription dfd = new DFAgentDescription();
         dfd.setName(getAID());
         ServiceDescription sd = new ServiceDescription();
-        sd.setType("Wumpus-World-Cave");
-        sd.setName("Cave-wandering");
+        sd.setType("Wumpus-World-Enviroment");
+        sd.setName("Enviroment-wandering");
         dfd.addServices(sd);
         try {
             DFService.register(this, dfd);

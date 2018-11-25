@@ -13,40 +13,43 @@ import java.util.Random;
 
 public class SpeleologistAgent extends Agent {
 
-    private AID na; // NavigatorAgent
-    private AID ea; // EnvironmentAgent
+    private AID navigatorId; // NavigatorAgent
+    private AID enviromentId; // EnvironmentAgent
 
 
     @Override
     protected void setup() {
         System.out.println("Speleologist agent " + getAID().getLocalName() + " is ready!");
-        addBehaviour(new WakerBehaviour(this,5000) {
+        addBehaviour(FindAndSetAgents());
+    }
+
+    @Override
+    protected void takeDown() {
+        System.out.println("Speleologist agent terminating...");
+    }
+
+    private WakerBehaviour FindAndSetAgents() {
+        return new WakerBehaviour(this,5000) {
             @Override
             protected void onWake() {
-                DFAgentDescription templateNavi = new DFAgentDescription();
-                DFAgentDescription templateCave = new DFAgentDescription();
-                ServiceDescription sdNavi = new ServiceDescription();
-                ServiceDescription sdCave = new ServiceDescription();
-                sdNavi.setType("Wumpus-World-Navigator");
-                sdCave.setType("Wumpus-World-Cave");
-                templateNavi.addServices(sdNavi);
-                templateCave.addServices(sdCave);
+                DFAgentDescription navigatorDescription = new DFAgentDescription();
+                DFAgentDescription enviromentDescription = new DFAgentDescription();
+                ServiceDescription navigatorSevice = new ServiceDescription();
+                ServiceDescription enviromentService = new ServiceDescription();
+                navigatorSevice.setType("Wumpus-World-Navigator");
+                enviromentService.setType("Wumpus-World-Enviroment");
+                navigatorDescription.addServices(navigatorSevice);
+                enviromentDescription.addServices(enviromentService);
                 try {
-                    na = DFService.search(myAgent, templateNavi)[0].getName();
-                    ea = DFService.search(myAgent, templateCave)[0].getName();
+                    navigatorId = DFService.search(myAgent, navigatorDescription)[0].getName();
+                    enviromentId = DFService.search(myAgent, enviromentDescription)[0].getName();
                 }
                 catch (FIPAException fe) {
                     fe.printStackTrace();
                 }
                 myAgent.addBehaviour(new CaveWanderingBehaviour());
             }
-        });
-
-    }
-
-    @Override
-    protected void takeDown() {
-        System.out.println("Speleologist agent terminating...");
+        };
     }
 
     private class CaveWanderingBehaviour extends Behaviour {
@@ -64,7 +67,7 @@ public class SpeleologistAgent extends Agent {
             switch (step) {
                 case 0:
                     ACLMessage requestPercept = new ACLMessage(ACLMessage.REQUEST);
-                    requestPercept.addReceiver(ea);
+                    requestPercept.addReceiver(enviromentId);
                     requestPercept.setConversationId("percept");
                     myAgent.send(requestPercept);
                     System.out.println(getAID().getLocalName() + ": Gathering information about Environment.");
@@ -85,7 +88,7 @@ public class SpeleologistAgent extends Agent {
                     break;
                 case 2:
                     ACLMessage askForAction = new ACLMessage(ACLMessage.REQUEST);
-                    askForAction.addReceiver(na);
+                    askForAction.addReceiver(navigatorId);
                     askForAction.setContent(message);
                     askForAction.setConversationId("Ask-for-action");
                     myAgent.send(askForAction);
@@ -106,7 +109,7 @@ public class SpeleologistAgent extends Agent {
                     break;
                 case 4:
                     ACLMessage action = new ACLMessage(ACLMessage.CFP);
-                    action.addReceiver(ea);
+                    action.addReceiver(enviromentId);
                     action.setContent(message);
                     action.setConversationId("action");
                     myAgent.send(action);
